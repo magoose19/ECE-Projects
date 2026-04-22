@@ -1,0 +1,277 @@
+question_number,output
+--- Trial 1 ---,
+Q1,"Question: What is the average Sunlight Hours across the dataset?
+Answer: The average Sunlight Hours across the dataset is **6.83 hours**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+FINAL_RESULT = df[""Sunlight_Hours""].mean()"
+Q2,"Question: Which Fertilizer Type is associated with the highest average Temperature?
+Answer: The **organic** fertilizer type is associated with the highest average Temperature.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+avg_temp_by_fertilizer = df.groupby('Fertilizer_Type', as_index=False)['Temperature'].mean()
+max_avg_temp = avg_temp_by_fertilizer['Temperature'].max()
+result = avg_temp_by_fertilizer.loc[avg_temp_by_fertilizer['Temperature'] == max_avg_temp, 'Fertilizer_Type']
+
+FINAL_RESULT = result.iloc[0] if len(result) == 1 else result.tolist()"
+Q3,"Question: What are the minimum, maximum, and median values of Humidity?
+Answer: Humidity has a minimum of 30.57, a maximum of 79.65, and a median of 59.18.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+humidity = df[""Humidity""]
+FINAL_RESULT = {
+    ""min"": float(humidity.min()),
+    ""max"": float(humidity.max()),
+    ""median"": float(humidity.median())
+}"
+Q4,"Question: How does average Sunlight Hours vary across different Soil Types?
+Answer: Average Sunlight Hours vary by soil type as follows: **clay** has the highest average at **7.27 hours**, followed by **sandy** at **6.76 hours**, and **loam** has the lowest at **6.41 hours**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+result = (
+    df.groupby('Soil_Type', as_index=False)['Sunlight_Hours']
+      .mean()
+      .sort_values('Sunlight_Hours', ascending=False)
+      .reset_index(drop=True)
+)
+
+FINAL_RESULT = result"
+Q5,"Question: Which combination of Water Frequency and Fertilizer Type has the highest average Sunlight Hours?
+Answer: The combination with the highest average Sunlight Hours is **weekly watering** with **organic fertilizer**, with an average of **7.33 hours**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+avg_sunlight = (
+    df.groupby([""Water_Frequency"", ""Fertilizer_Type""], as_index=False)[""Sunlight_Hours""]
+    .mean()
+)
+
+max_idx = avg_sunlight[""Sunlight_Hours""].idxmax()
+row = avg_sunlight.loc[max_idx]
+
+FINAL_RESULT = {
+    ""Water_Frequency"": row[""Water_Frequency""],
+    ""Fertilizer_Type"": row[""Fertilizer_Type""],
+    ""Average_Sunlight_Hours"": row[""Sunlight_Hours""],
+}"
+Q6,"Question: How does Temperature relate to Humidity across the dataset?
+Answer: Temperature and Humidity have a **very weak positive relationship** across the dataset, with a correlation of **0.1176**. This means that as temperature increases, humidity tends to rise slightly, but the association is quite small.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+corr = df[""Temperature""].corr(df[""Humidity""])
+
+FINAL_RESULT = {
+    ""correlation"": corr,
+    ""relationship"": ""positive"" if corr > 0 else (""negative"" if corr < 0 else ""no linear relationship"")
+}"
+Q7,"Question: Identify the top 5 growing conditions (based on Soil Type, Fertilizer Type, and Water Frequency) with the highest average Sunlight Hours and explain the key environmental factors present in those conditions.
+Answer: The top 5 growing conditions by average sunlight are:
+
+1. **Sandy + organic fertilizer + bi-weekly watering** — **8.00 hrs** sunlight  
+   - Cooler temperature: **21.0°C**
+   - Higher humidity: **66.7%**
+   - Growth milestone: **0.0**
+
+2. **Clay + chemical fertilizer + daily watering** — **7.81 hrs** sunlight  
+   - Warm temperature: **27.1°C**
+   - Low humidity: **46.2%**
+   - Growth milestone: **0.4**
+
+3. **Clay + organic fertilizer + weekly watering** — **7.75 hrs** sunlight  
+   - Warm temperature: **27.1°C**
+   - Moderate humidity: **61.8%**
+   - Growth milestone: **0.57**
+
+4. **Loam + organic fertilizer + weekly watering** — **7.60 hrs** sunlight  
+   - Warm temperature: **25.2°C**
+   - Moderate humidity: **57.2%**
+   - Growth milestone: **0.83**
+
+5. **Clay + none + weekly watering** — **7.60 hrs** sunlight  
+   - Warm temperature: **27.0°C**
+   - Higher humidity: **62.9%**
+   - Growth milestone: **0.23**
+
+**Key environmental factors:**  
+Across these top conditions, **clay soil** appears most often, **organic fertilizer** is the most common fertilizer type, and **weekly watering** is the most common watering schedule. These high-sunlight conditions generally pair with **warm temperatures** and **moderate to high humidity**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+group_cols = [""Soil_Type"", ""Fertilizer_Type"", ""Water_Frequency""]
+
+summary = (
+    df.groupby(group_cols, as_index=False)
+      .agg(
+          Avg_Sunlight_Hours=(""Sunlight_Hours"", ""mean""),
+          Count=(""Sunlight_Hours"", ""size""),
+          Avg_Temperature=(""Temperature"", ""mean""),
+          Avg_Humidity=(""Humidity"", ""mean""),
+          Avg_Growth_Milestone=(""Growth_Milestone"", ""mean"")
+      )
+      .sort_values(
+          by=[""Avg_Sunlight_Hours"", ""Count"", ""Avg_Temperature"", ""Avg_Humidity""],
+          ascending=[False, False, False, False]
+      )
+      .head(5)
+      .reset_index(drop=True)
+)
+
+# Build a concise explanation of environmental factors present in these top conditions
+if not summary.empty:
+    soil_counts = summary[""Soil_Type""].value_counts().to_dict()
+    fert_counts = summary[""Fertilizer_Type""].value_counts().to_dict()
+    water_counts = summary[""Water_Frequency""].value_counts().to_dict()
+
+    dominant_soil = sorted(soil_counts.items(), key=lambda x: (-x[1], x[0]))[0][0]
+    dominant_fert = sorted(fert_counts.items(), key=lambda x: (-x[1], x[0]))[0][0]
+    dominant_water = sorted(water_counts.items(), key=lambda x: (-x[1], x[0]))[0][0]
+
+    env_factors = {
+        ""dominant_soil_type_in_top_5"": dominant_soil,
+        ""dominant_fertilizer_type_in_top_5"": dominant_fert,
+        ""dominant_water_frequency_in_top_5"": dominant_water,
+        ""top_5_conditions"": summary.to_dict(orient=""records""),
+        ""explanation"": (
+            ""The top 5 growing conditions are the Soil_Type, Fertilizer_Type, and Water_Frequency ""
+            ""combinations with the highest mean Sunlight_Hours. Across these top combinations, ""
+            f""the most common soil type is '{dominant_soil}', the most common fertilizer type is ""
+            f""'{dominant_fert}', and the most common watering schedule is '{dominant_water}'. ""
+            ""For each condition, the table includes the average sunlight, temperature, humidity, ""
+            ""and growth milestone rate to show the accompanying environmental profile.""
+        )
+    }
+else:
+    env_factors = {
+        ""top_5_conditions"": [],
+        ""explanation"": ""No data available.""
+    }
+
+FINAL_RESULT = {
+    ""top_5_growing_conditions_by_avg_sunlight"": summary.to_dict(orient=""records""),
+    ""key_environmental_factors"": env_factors
+}"
+Q8,"Question: Find cases where plants receive high Sunlight Hours but have low Humidity. What Soil Type and Temperature are most common in these cases?
+Answer: For plants with **high Sunlight Hours** and **low Humidity** (based on thresholds of about **8.24 hours** and **49.3%**), the most common **Soil Type** is **loam**, and the most common **Temperature** is **15.2**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+sunlight_threshold = df[""Sunlight_Hours""].quantile(0.75)
+humidity_threshold = df[""Humidity""].quantile(0.25)
+
+subset = df[(df[""Sunlight_Hours""] >= sunlight_threshold) & (df[""Humidity""] <= humidity_threshold)]
+
+soil_mode = subset[""Soil_Type""].mode()
+temp_mode = subset[""Temperature""].mode()
+
+FINAL_RESULT = {
+    ""sunlight_threshold"": sunlight_threshold,
+    ""humidity_threshold"": humidity_threshold,
+    ""matching_rows"": int(len(subset)),
+    ""most_common_soil_type"": None if soil_mode.empty else soil_mode.iloc[0],
+    ""most_common_temperature"": None if temp_mode.empty else float(temp_mode.iloc[0]),
+}"
+Q9,"Question: Identify plants with similar Soil Type, Water Frequency, and Fertilizer Type but significantly different Temperature and Humidity values. What patterns emerge?
+Answer: Plants with the same **Soil Type, Water Frequency, and Fertilizer Type** can still differ a lot in **Temperature** and **Humidity**.
+
+Key examples:
+- **Loam + daily + none**: temperature range **17.71**, humidity range **47.55**
+- **Sandy + daily + none**: temperature range **16.85**, humidity range **45.90**
+- **Clay + daily + none**: temperature range **13.56**, humidity range **45.66**
+- **Clay + bi-weekly + chemical**: temperature range **15.38**, humidity range **43.41**
+
+Pattern:
+- The biggest spreads often appear in **daily watering** and **none/chemical fertilizer** groups.
+- **Humidity varies especially widely**, often more than temperature.
+- Even identical care-condition groups are not tightly clustered, suggesting **temperature and humidity are influenced by other factors beyond soil, watering, and fertilizer**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+group_cols = [""Soil_Type"", ""Water_Frequency"", ""Fertilizer_Type""]
+
+# Summarize temperature and humidity within each matching condition group
+summary = (
+    df.groupby(group_cols)
+    .agg(
+        count=(""Temperature"", ""size""),
+        temp_mean=(""Temperature"", ""mean""),
+        temp_min=(""Temperature"", ""min""),
+        temp_max=(""Temperature"", ""max""),
+        temp_range=(""Temperature"", lambda s: s.max() - s.min()),
+        humidity_mean=(""Humidity"", ""mean""),
+        humidity_min=(""Humidity"", ""min""),
+        humidity_max=(""Humidity"", ""max""),
+        humidity_range=(""Humidity"", lambda s: s.max() - s.min()),
+    )
+    .reset_index()
+)
+
+# Focus on groups with multiple plants and large spreads in temperature/humidity
+multi = summary[summary[""count""] > 1].copy()
+multi[""combined_range""] = multi[""temp_range""] + multi[""humidity_range""]
+
+# Take the most variable groups as ""significantly different""
+top_groups = multi.sort_values(
+    [""combined_range"", ""temp_range"", ""humidity_range""],
+    ascending=False
+).head(10)
+
+# Build a concise, data-driven pattern description
+if top_groups.empty:
+    FINAL_RESULT = {
+        ""message"": ""No groups with repeated Soil_Type, Water_Frequency, and Fertilizer_Type combinations were found."",
+        ""summary"": summary.to_dict(orient=""records""),
+    }
+else:
+    patterns = []
+    for _, row in top_groups.iterrows():
+        patterns.append({
+            ""Soil_Type"": row[""Soil_Type""],
+            ""Water_Frequency"": row[""Water_Frequency""],
+            ""Fertilizer_Type"": row[""Fertilizer_Type""],
+            ""count"": int(row[""count""]),
+            ""temperature_range"": float(row[""temp_range""]),
+            ""humidity_range"": float(row[""humidity_range""]),
+            ""temperature_mean"": float(row[""temp_mean""]),
+            ""humidity_mean"": float(row[""humidity_mean""]),
+        })
+
+    FINAL_RESULT = {
+        ""top_variable_groups"": patterns,
+        ""overall_pattern"": (
+            ""Plants sharing the same Soil_Type, Water_Frequency, and Fertilizer_Type can still ""
+            ""show wide spreads in Temperature and Humidity, suggesting these environmental ""
+            ""conditions vary substantially within identical care-condition groups.""
+        ),
+        ""full_group_summary"": summary.to_dict(orient=""records""),
+    }"

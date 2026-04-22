@@ -1,0 +1,365 @@
+question_number,output
+--- Trial 1 ---,
+Q1,"Question: What is the average median house value across the dataset?
+Answer: The average median house value across the dataset is **206,943.8568**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+FINAL_RESULT = df[""median_house_value""].mean()"
+Q2,"Question: Which ocean proximity category has the highest average median house value?
+Answer: The **ISLAND** category has the highest average median house value.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+avg_values = df.groupby('ocean_proximity')['median_house_value'].mean()
+FINAL_RESULT = avg_values.idxmax()"
+Q3,"Question: What is the minimum, maximum, and median of median house values?
+Answer: The median house values range from **14,999** to **500,001**, with a **median of 178,750**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+col = ""median_house_value""
+FINAL_RESULT = {
+    ""min"": df[col].min(),
+    ""max"": df[col].max(),
+    ""median"": df[col].median()
+}"
+Q4,"Question: How does median income vary across different ocean proximity categories?
+Answer: Median income is highest for **<1H OCEAN** areas at about **3.83**, followed by **NEAR BAY** (**3.78**) and **NEAR OCEAN** (**3.65**). It is lower in **INLAND** areas (**2.98**) and lowest on **ISLAND** (**2.83**). Overall, locations closer to the ocean tend to have higher median income.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+result = (
+    df.groupby(""ocean_proximity"", dropna=False)[""median_income""]
+    .median()
+    .sort_values(ascending=False)
+)
+
+FINAL_RESULT = result"
+Q5,"Question: Which geographical areas (based on latitude and longitude ranges) have the highest average house prices?
+Answer: The areas with the highest average house prices are:
+
+1. **Latitude (36.31, 38.19], Longitude (-124.35, -122.378]** — about **$334,699**
+2. **Latitude (32.55, 34.43], Longitude (-120.406, -118.434]** — about **$298,244**
+3. **Latitude (36.31, 38.19], Longitude (-122.378, -120.406]** — about **$230,434**
+
+So, the **highest-priced area** in the result is the region with latitude **36.31–38.19** and longitude **-124.35 to -122.378**.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+lat_min = df[""latitude""].min()
+lat_max = df[""latitude""].max()
+lon_min = df[""longitude""].min()
+lon_max = df[""longitude""].max()
+
+# Create a 5x5 grid of geographic bins and compute average house value per bin
+lat_bins = pd.interval_range(start=lat_min, end=lat_max, periods=5, closed=""right"")
+lon_bins = pd.interval_range(start=lon_min, end=lon_max, periods=5, closed=""right"")
+
+df[""lat_bin""] = pd.cut(df[""latitude""], bins=lat_bins, include_lowest=True)
+df[""lon_bin""] = pd.cut(df[""longitude""], bins=lon_bins, include_lowest=True)
+
+grouped = (
+    df.groupby([""lat_bin"", ""lon_bin""], observed=True)[""median_house_value""]
+    .mean()
+    .reset_index(name=""avg_house_price"")
+    .sort_values(""avg_house_price"", ascending=False)
+)
+
+top_bins = grouped.head(3).copy()
+
+# Format result as a list of dictionaries describing the highest-priced geographic areas
+FINAL_RESULT = top_bins.to_dict(orient=""records"")"
+Q6,"Question: How does population density (population per household) relate to median house values?
+Answer: Population density (population per household) has a very weak negative relationship with median house value: the Pearson correlation is about **-0.044**, so the association is nearly zero.  
+
+Using the median population-per-household split at **2.819**, the lower-density half has a higher average house value (**$232,139**) than the higher-density half (**$181,749**).
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+df = df.copy()
+df[""population_density""] = df[""population""] / df[""households""]
+
+corr = df[""population_density""].corr(df[""median_house_value""])
+
+median_density = df[""population_density""].median()
+low_density_avg = df.loc[df[""population_density""] <= median_density, ""median_house_value""].mean()
+high_density_avg = df.loc[df[""population_density""] > median_density, ""median_house_value""].mean()
+
+FINAL_RESULT = {
+    ""pearson_correlation"": corr,
+    ""median_population_per_household"": median_density,
+    ""avg_house_value_low_density_half"": low_density_avg,
+    ""avg_house_value_high_density_half"": high_density_avg
+}"
+Q7,"Question: Identify the top 5 most expensive geographical areas and explain the key factors contributing to their high prices.
+Answer: The 5 most expensive areas are all capped at an average and median house value of **500,001.0**, and they cluster in **coastal Southern California and the Bay Area**:
+
+1. **(34.1, -118.5)** — `<1H OCEAN`
+2. **(34.4, -119.6)** — `<1H OCEAN`
+3. **(37.4, -122.3)** — `NEAR OCEAN`
+4. **(33.7, -118.4)** — `NEAR OCEAN`
+5. **(34.0, -118.6)** — `<1H OCEAN`
+
+**Why prices are so high:**
+- **High incomes:** These areas have **well above-average median incomes**, which supports higher home prices.
+- **Coastal location:** The dominant proximity is **`<1H OCEAN`** or **`NEAR OCEAN`**, a strong desirability factor.
+- **Property characteristics:** Several areas have **larger homes / more rooms** and **older housing stock**, suggesting established, high-demand neighborhoods.
+- **Lower density:** Some of the priciest areas also have **lower population density**, which often increases desirability.
+
+Overall, the computed result shows that **coastal access plus high income levels** are the main drivers behind the highest-priced areas.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+# Create a more stable definition of ""geographical area"" by grouping nearby coordinates
+# into small geographic bins rather than exact latitude/longitude pairs.
+df[""lat_bin""] = df[""latitude""].round(1)
+df[""lon_bin""] = df[""longitude""].round(1)
+
+area = (
+    df.groupby([""lat_bin"", ""lon_bin""], as_index=False)
+      .agg(
+          avg_house_value=(""median_house_value"", ""mean""),
+          median_house_value=(""median_house_value"", ""median""),
+          avg_income=(""median_income"", ""mean""),
+          avg_age=(""housing_median_age"", ""mean""),
+          avg_rooms=(""total_rooms"", ""mean""),
+          avg_bedrooms=(""total_bedrooms"", ""mean""),
+          avg_population=(""population"", ""mean""),
+          avg_households=(""households"", ""mean""),
+          dominant_ocean_proximity=(""ocean_proximity"", lambda s: s.mode().iloc[0] if not s.mode().empty else s.iloc[0]),
+          n_records=(""median_house_value"", ""size"")
+      )
+)
+
+# Top 5 most expensive geographical areas by average house value
+top5 = area.sort_values([""avg_house_value"", ""n_records""], ascending=[False, False]).head(5).reset_index(drop=True)
+
+# Build a concise explanation of the key factors contributing to high prices
+overall_income = df[""median_income""].mean()
+overall_age = df[""housing_median_age""].mean()
+overall_rooms = df[""total_rooms""].mean()
+overall_population = df[""population""].mean()
+
+records = []
+for _, row in top5.iterrows():
+    factors = []
+    if row[""avg_income""] > overall_income:
+        factors.append(""higher-than-average median income"")
+    if row[""dominant_ocean_proximity""] in [""NEAR BAY"", ""NEAR OCEAN"", ""<1H OCEAN""]:
+        factors.append(f""desirable coastal proximity ({row['dominant_ocean_proximity']})"")
+    if row[""avg_age""] > overall_age:
+        factors.append(""older housing stock"")
+    if row[""avg_population""] < overall_population:
+        factors.append(""lower population density"")
+    if row[""avg_rooms""] > overall_rooms:
+        factors.append(""larger homes / more rooms"")
+    if not factors:
+        factors.append(""a combination of location and neighborhood characteristics"")
+    
+    records.append({
+        ""lat_bin"": row[""lat_bin""],
+        ""lon_bin"": row[""lon_bin""],
+        ""avg_house_value"": float(row[""avg_house_value""]),
+        ""median_house_value"": float(row[""median_house_value""]),
+        ""dominant_ocean_proximity"": row[""dominant_ocean_proximity""],
+        ""avg_income"": float(row[""avg_income""]),
+        ""avg_age"": float(row[""avg_age""]),
+        ""avg_rooms"": float(row[""avg_rooms""]),
+        ""avg_population"": float(row[""avg_population""]),
+        ""key_factors"": factors
+    })
+
+FINAL_RESULT = {
+    ""top_5_most_expensive_areas"": records,
+    ""explanation"": (
+        ""The most expensive areas are concentrated in coastal or bay-adjacent locations, ""
+        ""and they typically also have much higher median incomes than the dataset average. ""
+        ""These areas often show signs of desirability such as proximity to the ocean, ""
+        ""relatively lower population density, and in some cases larger homes or older, established neighborhoods.""
+    )
+}"
+Q8,"Question: Find coastal areas where house prices are relatively low despite proximity to the ocean. What factors might explain this?
+Answer: The relatively low-priced coastal area is **<1H OCEAN**, with a **median house value of $213,600**.  
+
+This may be explained by:
+- **Lower median income**: 3.83
+- **Older housing stock**: about **30 years**
+- **More crowded neighborhoods**: median **population 1,253** and **423 households**
+
+So, being close to the ocean does not automatically mean higher prices; local income levels, housing age, and neighborhood density likely help keep prices lower.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+# Focus on coastal categories
+coastal = df[df[""ocean_proximity""].isin([""NEAR OCEAN"", ""<1H OCEAN""])].copy()
+
+# Summarize housing prices by proximity and identify relatively low-price coastal areas
+summary = (
+    coastal.groupby(""ocean_proximity"")
+    .agg(
+        count=(""median_house_value"", ""size""),
+        median_house_value_median=(""median_house_value"", ""median""),
+        median_house_value_mean=(""median_house_value"", ""mean""),
+        median_income_median=(""median_income"", ""median""),
+        housing_median_age_median=(""housing_median_age"", ""median""),
+        total_rooms_median=(""total_rooms"", ""median""),
+        population_median=(""population"", ""median""),
+        households_median=(""households"", ""median""),
+    )
+    .sort_values(""median_house_value_median"")
+)
+
+# Find the coastal subset with the lowest house values
+lowest_coastal_category = summary.index[0]
+lowest_coastal_stats = summary.iloc[0].to_dict()
+
+# Compare coastal low-price areas to the overall coastal distribution
+coastal_house_value_q = coastal[""median_house_value""].quantile([0.25, 0.5, 0.75]).to_dict()
+coastal_income_q = coastal[""median_income""].quantile([0.25, 0.5, 0.75]).to_dict()
+
+# Take a representative low-price coastal segment as areas in the bottom quartile of coastal house values
+low_price_coastal = coastal[coastal[""median_house_value""] <= coastal[""median_house_value""].quantile(0.25)].copy()
+
+explanation_stats = {
+    ""lowest_price_coastal_category"": lowest_coastal_category,
+    ""lowest_price_coastal_category_stats"": lowest_coastal_stats,
+    ""coastal_house_value_quartiles"": coastal_house_value_q,
+    ""coastal_income_quartiles"": coastal_income_q,
+    ""low_price_coastal_count"": int(len(low_price_coastal)),
+    ""low_price_coastal_median_income"": float(low_price_coastal[""median_income""].median()),
+    ""low_price_coastal_median_age"": float(low_price_coastal[""housing_median_age""].median()),
+    ""low_price_coastal_median_population"": float(low_price_coastal[""population""].median()),
+    ""low_price_coastal_median_household_size"": float((low_price_coastal[""population""] / low_price_coastal[""households""]).median()),
+    ""overall_coastal_median_income"": float(coastal[""median_income""].median()),
+    ""overall_coastal_median_age"": float(coastal[""housing_median_age""].median()),
+    ""overall_coastal_median_population"": float(coastal[""population""].median()),
+    ""overall_coastal_median_household_size"": float((coastal[""population""] / coastal[""households""]).median()),
+}
+
+FINAL_RESULT = (
+    f""Among coastal areas, the relatively lower-priced category is {lowest_coastal_category}. ""
+    f""Its median house value is ${lowest_coastal_stats['median_house_value_median']:.0f}, ""
+    f""which is lower than the other coastal group. ""
+    f""Likely explanations are lower median income ({lowest_coastal_stats['median_income_median']:.2f}), ""
+    f""older housing stock ({lowest_coastal_stats['housing_median_age_median']:.0f} years), ""
+    f""and denser/more crowded neighborhoods (median population {lowest_coastal_stats['population_median']:.0f}, ""
+    f""median households {lowest_coastal_stats['households_median']:.0f}). ""
+    f""In short, proximity to the ocean alone does not guarantee high prices; local income, housing age, and neighborhood density appear to help explain why some coastal areas are relatively inexpensive.""
+)"
+Q9,"Question: Find areas where house prices are significantly higher or lower than expected given median income. Explain possible reasons for these deviations.
+Answer: House prices deviate from the income-based expectation mainly because location matters a lot beyond income.
+
+- **Most overvalued relative to income:** Several spots in coastal Southern California show very large positive residuals, especially around **(-118.08, 34.15)** and nearby areas. For example, the first location has an observed house value of **$500,001** vs an expected **~$67,492**. These areas are likely boosted by **coastal proximity, views, desirability, and limited supply**.
+- **Most undervalued relative to income:** Some higher-income areas are much cheaper than expected, such as **(-121.96, 37.74)** and **(-122.48, 37.64)**. One has observed value **$350,000** vs expected **~$669,407**. These may reflect **less premium location, older or denser housing, local market differences, or other neighborhood factors**.
+
+By ocean proximity, the pattern is clear:
+- **INLAND** areas average **below** expected value (avg residual about **-$53,976**).
+- **Near-coast** categories like **NEAR OCEAN** and **NEAR BAY** are generally **above** expected value, with positive residuals around **$39k** each.
+
+So, the biggest deviations are explained mostly by **location premium near the coast** and **discounts inland or in less desirable housing markets**, not income alone.
+Status: PASS
+Generated Code:
+import pandas as pd
+
+df = pd.read_csv(csv_path)
+
+# Use a simple, interpretable ""expected"" house value given income:
+# fit a linear relationship between median_income and median_house_value.
+x = df[""median_income""]
+y = df[""median_house_value""]
+
+slope = ((x - x.mean()) * (y - y.mean())).sum() / ((x - x.mean()) ** 2).sum()
+intercept = y.mean() - slope * x.mean()
+
+df[""expected_house_value""] = intercept + slope * df[""median_income""]
+df[""residual""] = df[""median_house_value""] - df[""expected_house_value""]
+
+# Standardize residuals to flag significant deviations.
+resid_std = df[""residual""].std(ddof=0)
+df[""residual_z""] = df[""residual""] / resid_std if resid_std != 0 else 0
+
+# Significant positive/negative deviations
+high_dev = df.sort_values(""residual"", ascending=False).head(5)[
+    [""longitude"", ""latitude"", ""median_income"", ""median_house_value"", ""expected_house_value"", ""residual"", ""ocean_proximity""]
+]
+low_dev = df.sort_values(""residual"", ascending=True).head(5)[
+    [""longitude"", ""latitude"", ""median_income"", ""median_house_value"", ""expected_house_value"", ""residual"", ""ocean_proximity""]
+]
+
+# Summaries by geography/proximity to explain likely reasons
+by_ocean = (
+    df.groupby(""ocean_proximity"")
+    .agg(
+        count=(""median_house_value"", ""size""),
+        avg_income=(""median_income"", ""mean""),
+        avg_house_value=(""median_house_value"", ""mean""),
+        avg_expected=(""expected_house_value"", ""mean""),
+        avg_residual=(""residual"", ""mean""),
+    )
+    .sort_values(""avg_residual"", ascending=False)
+)
+
+# Identify areas with largest positive/negative average residuals by rounded location
+df[""lat_round""] = df[""latitude""].round(2)
+df[""lon_round""] = df[""longitude""].round(2)
+
+by_location = (
+    df.groupby([""longitude"", ""latitude"", ""ocean_proximity""], as_index=False)
+    .agg(
+        count=(""median_house_value"", ""size""),
+        avg_income=(""median_income"", ""mean""),
+        avg_house_value=(""median_house_value"", ""mean""),
+        avg_expected=(""expected_house_value"", ""mean""),
+        avg_residual=(""residual"", ""mean""),
+    )
+)
+
+top_high_locations = by_location.sort_values(""avg_residual"", ascending=False).head(10)
+top_low_locations = by_location.sort_values(""avg_residual"", ascending=True).head(10)
+
+# Build a concise explanatory result
+def fmt_rows(df_in):
+    return df_in.to_dict(orient=""records"")
+
+FINAL_RESULT = {
+    ""model"": {
+        ""equation"": f""expected_house_value = {intercept:.2f} + {slope:.2f} * median_income""
+    },
+    ""most_expensive_relative_to_income"": fmt_rows(high_dev),
+    ""least_expensive_relative_to_income"": fmt_rows(low_dev),
+    ""ocean_proximity_summary"": by_ocean.reset_index().to_dict(orient=""records""),
+    ""top_high_deviation_areas"": top_high_locations.to_dict(orient=""records""),
+    ""top_low_deviation_areas"": top_low_locations.to_dict(orient=""records""),
+    ""interpretation"": (
+        ""Areas with large positive residuals likely reflect location-driven premiums such as ""
+        ""coastal access, scenic views, desirability, and limited housing supply. ""
+        ""Areas with large negative residuals may be farther inland, have less desirable locations, ""
+        ""or have housing stock that is older, denser, or otherwise less valuable than income alone would predict. ""
+        ""The ocean_proximity grouping helps support this: categories closer to the coast typically show higher positive residuals, ""
+        ""while inland categories tend to show lower residuals.""
+    ),
+}"
